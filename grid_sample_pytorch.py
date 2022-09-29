@@ -1,8 +1,10 @@
-# import torch
-# import torch.nn as nn
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import inspect
 import matplotlib.pyplot as plt
+import cv2
+import numpy as np
 
 
 def mesh_grid(B, H, W):
@@ -50,6 +52,13 @@ def flow_warp(x, flow12, pad='border', mode='bilinear'):
     return im1_recons
 
 
+def _ReadFlow(flow_path, w, h):
+
+    with open(flow_path, 'rb') as f:
+
+        data = np.fromfile(f, np.float32, count=int(w) * int(h))
+        # Reshape data into 2D array (columns, rows, bands)
+        return np.reshape(data, (int(h), int(w)))
 
 def main():
 
@@ -68,6 +77,10 @@ def main():
     img_warp = flow_warp(torch.from_numpy(np.transpose(image[None, :, :, :]/127.5-1, [0, 3, 1, 2])), torch.from_numpy(flow_array[None, :, :, :]).double())
     np_warped_image = img_warp[0].detach().cpu().numpy().transpose([1, 2, 0])
     cv2.imwrite('./experiment/output_pytorch.png', (np_warped_image + 1) * 127.5)
+    # plt.figure()
+    # plt.imshow(((np_warped_image + 1) * 127.5)[:, :, ::-1].astype(np.uint8))
+    # plt.text(10, 70, 'grid_sample_pytorch', fontsize=15, color='green')
+    # plt.show()
 
 
 if __name__ == "__main__":
